@@ -113,3 +113,64 @@
                             (filter odd? sequence))))
 (define l (list 1 2 3 4 5))
 (product-of-squares-of-odd-elements l)
+
+; Nested mappings
+; Given n > 0, find all pairs of distinct positive integers i and j so that i + j is prime 1<= j <= i <= n.
+; First generate sequence of pairs:
+(accumulate append
+            nil
+            (map (lambda (i)
+                   (map (lambda (j) (list i j))
+                        (enumerate-interval 1 (- i 1))))
+                 (enumerate-interval 1 5)))
+
+; Combination of mapping and accumulating:
+(define (flatmap proc seq)
+  (accumulate append nil (map proc seq)))
+
+; filter sequence of pairs to find sum is prime.
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+
+; Use prime from 1.2.6
+(define (smallest-divisor n)
+  (find-divisor n 2))
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+           ((divides? test-divisor n) test-divisor)
+           (else (find-divisor n (+ test-divisor 1)))))
+(define (divides? a b)
+  (= (remainder b a) 0))
+
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
+; Construct triple of two elements and pair along with their sum:
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+
+; Combine all:
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+           (filter prime-sum?
+                    (flatmap
+                      (lambda (i)
+                         (map (lambda (j) (list i j))
+                                  (enumerate-interval 1 (- i 1))))
+                      (enumerate-interval 1 n)))))
+(prime-sum-pairs 6)
+
+; Determine all permutations of {1, 2, 3}:
+(define (permutations s)
+  (if (null? s)
+      (list nil)
+      (flatmap (lambda (x)
+                      (map (lambda (p) (cons x p))
+                              (permutations (remove x s))))
+                    s)))
+
+; Remove item from sequence can be expressed as a filter:
+(define (remove item sequence)
+  (filter (lambda (x) (not (= x item)))
+           sequence))
+(permutations (list 1 2 3))
